@@ -2,6 +2,7 @@
 
 import serial
 import serial.tools.list_ports as ports
+from serial.serialutil import SerialException
 import io
 from time import sleep
 
@@ -11,8 +12,7 @@ devices = []
 estCall = "? listen _"
 estResponse = "$ listen yes"
 
-def main():
-    
+def main():  
     devices = findPorts()
 
     print(devices)
@@ -26,7 +26,7 @@ def findPorts():
 
     # List Available serial ports
     for port in ports.comports():
-        print(port.device)
+        print("Found " + port.device)
 
         if (establishComms(port.device)):
             ret.append(port.device)
@@ -54,11 +54,16 @@ def establishComms(port):
     return False
 
 def sendMessage(msg, port):
-    ser = serial.Serial(port, timeout=1)
-    sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser))
-    sio.write(msg)
-    sio.flush()
+    try:
+        ser = serial.Serial(port, timeout=1)
+        sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser))
+        sio.write(msg)
+        sio.flush()
 
-    return sio.readline().strip()
+        response = sio.readline().strip()
+        # print(response)
+        return response
+    except SerialException: 
+        print("Failed to open {}".format(port))
 
 main()

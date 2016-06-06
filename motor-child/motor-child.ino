@@ -22,6 +22,9 @@ void serialEvent() {
     String command = Serial.readStringUntil(' ');
     String info = Serial.readStringUntil('\n');
     receivedMessage(symbol, command, info);
+    digitalWrite(LED, HIGH);
+    delay(500);
+    digitalWrite(LED, LOW);
   }
 }
 
@@ -29,6 +32,7 @@ void receivedMessage(String symbol, String command, String info) {
   if (symbol == "?") {
     if (command == "listen") {
       Serial.println(estResponse);
+      
     } 
     
     else if (command == "id") {
