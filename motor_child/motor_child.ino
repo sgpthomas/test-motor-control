@@ -44,10 +44,10 @@ void receivedMessage(String symbol, String command, String info) {
   }
   
   if (symbol == "!") {
-    if (command == "set_id") {
+    if (command == "id") {
       id = info;
       setID(info);
-      Serial.println("# set_id " + info);
+      Serial.println("# id " + info);
     }
   }
 }
