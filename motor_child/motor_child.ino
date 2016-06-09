@@ -32,22 +32,47 @@ void serialEvent() {
 }
 
 void receivedMessage(String symbol, String command, String info) {  
-  if (symbol == "?") {
-    if (command == "listen") {
-      Serial.println(estResponse);
-      
+//  if (symbol == "?") {
+//    if (command == "listen") {
+//      Serial.println(estResponse);
+//      
+//    } 
+//    
+//    else if (command == "id") {
+//      Serial.println("$ id " + id);
+//    }
+//  }
+//  
+//  if (symbol == "!") {
+//    if (command == "id") {
+//      id = info;
+//      setID(info);
+//      Serial.println("# id " + info);
+//    }
+//  }
+
+  if (command == "listen") {
+    Serial.println(estResponse);
+  }
+
+  else if (command == "id") {
+    if (symbol == "?") { // asking for id
+      Serial.println("$ id " + id);
     } 
     
-    else if (command == "id") {
-      Serial.println("$ id " + id);
-    }
-  }
-  
-  if (symbol == "!") {
-    if (command == "id") {
+    else if (symbol == "!") { // set id
       id = info;
       setID(info);
       Serial.println("# id " + info);
+    }
+  }
+
+  else if (command == "move") {
+    if (symbol == "!>") { // move and open data stream
+      for (int i = 0; i < 10; i++) {
+        Serial.println("> move " + i);
+      }
+      Serial.println("/> move 10");
     }
   }
 }
