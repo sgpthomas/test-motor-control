@@ -49,14 +49,15 @@ def establishComms(port):
     return False
 
 def sendMessage(msg, port):
+    delay = 0.6
     try:
         ser = serial.Serial(port, timeout=1)
-        sleep(1)
+        sleep(delay)
 
         sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser))
 
         sio.write(msg)
-        sleep(1)
+        sleep(delay)
 
         sio.flush()
         response = sio.readline().strip()
