@@ -6,21 +6,23 @@ String id = "";
 // variables
 int LED = 13;
 
-// response
-String estCall = "? listen _";
-String estResponse = "$ listen yes";
+// version number
+String version_number = "0.1";
+
+// is streaming?
+bool stream = false;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
   Serial.begin(9600);
-  Serial.setTimeout(250);
+//  Serial.setTimeout(250);/
   pinMode(LED, OUTPUT);
   
   id = rememberID();
 }
 
 void serialEvent() {
-  if (Serial.available()) {
+  if (Serial.available() && !stream) {
     String symbol = Serial.readStringUntil(' ');
     String command = Serial.readStringUntil(' ');
     String info = Serial.readStringUntil('\n');
@@ -51,8 +53,8 @@ void receivedMessage(String symbol, String command, String info) {
 //    }
 //  }
 
-  if (command == "listen") {
-    Serial.println(estResponse);
+  if (command == "version") {
+    Serial.println("$ version " + version_number);
   }
 
   else if (command == "id") {
@@ -68,11 +70,16 @@ void receivedMessage(String symbol, String command, String info) {
   }
 
   else if (command == "move") {
-    if (symbol == "!>") { // move and open data stream
-      for (int i = 0; i < 10; i++) {
-        Serial.println("> move " + i);
+    if (symbol == "!") { // move and open data stream
+      stream = true;
+      Serial.println("> move " + info);
+      delay(100);
+      for (int i = 0; i < info.toInt(); i++) {
+        Serial.println(i);
+        // delay(200);
       }
-      Serial.println("/> move 10");
+      Serial.println("/ move " + info);
+      stream = false;
     }
   }
 }

@@ -4,66 +4,94 @@ from serial.serialutil import SerialException
 import io
 from time import sleep
 
-devices = {}
+version = "0.1"
 
-# response
-estCall = "? listen _"
-estResponse = "$ listen yes"
+""" Talks to available ports and creates motor object if it finds anything """
+def getMotors (config_folder = ""):
+    # initialize return array
+    motors = []
 
-def main():
-    devices = findPorts()
+    # if configuration folder is not given, then use default
+    # if (config_folder == ""):
 
-    print(devices)
-
-def findPorts():
-    ret = {}
-
-    # List Available serial ports
+    # search through available ports
     for port in list.comports():
         print("Found " + port.device)
 
+        # if we can establish communications with the port, get the id and then append motor object to motors
         if (establishComms(port.device)):
-            ID = getID(port.device)
-            ret[ID] = port.device;
+            ID = sendMessage("?", "id", "_", port.device)
+            motors.append(str(ID[2]))
+            # motors.append(Motor(config_folder, port.device, ID))
 
-    # if len(ret) < 1:
-    #     findPorts()
-
-    return ret
-
-def getID(port):
-    ID = sendMessage("? id _", port).split(" ")
-
-    if len(ID) < 3:
-        confirmation = sendMessage("! id test_motor_00", port)
-
-    return ID[2]
+    # return motor array
+    return motors
 
 def establishComms(port):
-    response = sendMessage(estCall, port)
+    # send initial message
+    response = sendMessage ("?", "version", "_", port)
 
-    if (response == estResponse):
+    # check to make sure that returned version matches ours
+    if (response[2] == version):
         return True
-        print("Communication established")
 
+    # communications have not been established
     return False
 
-def sendMessage(msg, port):
+def sendMessage(symbol, command, data, port, func=None):
+    # define delay because of serial gods looking down on us
     delay = 0.6
     try:
-        ser = serial.Serial(port, timeout=1)
-        sleep(delay)
+        # create serial port and relevant text wrapper
+        ser = serial.Serial(None, timeout=2)
+        ser.port = port
+        ser.dsrdtr = True
+        ser.open()
 
-        sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser))
+        # create message
+        msg = "{} {} {}".format(symbol, command, data)
 
-        sio.write(msg)
-        sleep(delay)
+        # ask the gods of serial about the delays
+        # sleep(delay)
+        ser.write(bytes(msg, "ascii"))
+        # sleep(delay)
 
-        sio.flush()
-        response = sio.readline().strip()
+        # read response and strip extrenous space and split it
+        response = ser.readline().strip().decode("ascii").split(" ")
+
+        # make sure that there are 3 parts
+        if len(response) != 3:
+            raise Exception("Arduino response was not proper length, but was {}".format(response))
+
+        # make sure that response has the same command as initial message
+        if response[1] != command:
+            raise Exception("Arduino responded with incorrect command. {} instead of {}".format(response[1], command))
+
+        # if response opens a stream, pass the serial instance to a given function
+        if response[0] == ">" and func != None:
+            func(ser)
 
         return response
     except SerialException:
         print("Failed to open {}".format(port))
 
-main()
+# print(getMotors())
+
+def func(ser):
+    while True:
+        response = ser.readline().strip().decode("ascii").split(" ")
+        print(response)
+        if response[0] == "/":
+            break
+
+port = "/dev/ttyACM0"
+sendMessage("!", "move", '10', port, func)
+print("done")
+
+"""
+# Disable reset after hangup
+with open(path) as f:
+    attrs = termios.tcgetattr(f)
+    attrs[2] = attrs[2] & ~termios.HUPCL
+    termios.tcsetattr(f, termios.TCSAFLUSH, attrs)
+"""
